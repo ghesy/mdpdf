@@ -3,7 +3,7 @@
 # and open it with a pdf reader or save it to file.
 
 # config
-pdf_reader=zathura
+pdf_reader="${MDPDF:-zathura}"
 
 main() {
     # defualt settings
@@ -11,8 +11,7 @@ main() {
     overwrite=false # overwrite existing files while saving
     stdout=false # print to stdout instead of saving
     printgroff=false # print groff to stdout
-    command -v "$pdf_reader" >/dev/null &&
-        open=true # open pdf with pdf reader.
+    command -v "$pdf_reader" >/dev/null && open=true # open pdf with pdf reader.
 
     while true; do case "$1" in
         -s) open=false; shift ;;
@@ -108,6 +107,12 @@ Options:
   -n          don't inherit documen's title from
                 the first top-level markdown heading.
   -t <title>  set the title manually.
+
+by default, mdpdf saved the pdf to a temporary file
+and opens it with the pdf reader specified in the
+environment variable MDPDF. if MDPDF is not specified,
+zathura is used. if the pdf reader isn't installed,
+mdpdf goes to save mode instead of open mode.
 eof
 exit
 }
