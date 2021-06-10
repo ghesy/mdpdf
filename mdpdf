@@ -53,7 +53,7 @@ compile() {
 }
 
 open() {
-    p="${XDG_RUNTIME_DIR:-/tmp}/" # prefix
+    p="${XDG_RUNTIME_DIR:-/tmp}/mdpdf/" # prefix
     mkdir -p "$(dirname "$p$out")" || exit 1
     md_to_pdf "$in" > "$p$out"
     $pdf_reader "$p$out" >/dev/null 2>&1
