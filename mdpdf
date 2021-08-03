@@ -62,7 +62,12 @@ open() {
 
 save() {
     if [ "$overwrite" != true ] && [ -e "$out" ]; then
-        confirm file "$out" exists. overwrite? || return 1
+        printf %s "file $out exists. overwrite? [y/n] "
+        read ans
+        case "$ans" in
+            Y|y) ;;
+            *) return 1 ;;
+        esac
     fi
     md_to_pdf "$in" > "$out"
 }
