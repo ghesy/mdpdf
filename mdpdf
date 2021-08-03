@@ -11,6 +11,7 @@ main() {
     overwrite=false # overwrite existing files while saving
     stdout=false # print to stdout instead of saving
     printgroff=false # print groff to stdout
+    open=true # open the pdf after saving it in temporary storage
 
     # use xdg-open if the specified pdf reader doesn't exist
     command -v "$pdf_reader" >/dev/null || pdf_reader=xdg-open
