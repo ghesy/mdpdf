@@ -6,12 +6,14 @@
 pdf_reader="${MDPDF:-zathura}"
 
 main() {
-    # defualt settings
+    # defualt values
     inherit=true # inherit document title from first heading
     overwrite=false # overwrite existing files while saving
     stdout=false # print to stdout instead of saving
     printgroff=false # print groff to stdout
-    command -v "$pdf_reader" >/dev/null && open=true # open pdf with pdf reader.
+
+    # use xdg-open if the specified pdf reader doesn't exist
+    command -v "$pdf_reader" >/dev/null || pdf_reader=xdg-open
 
     while true; do case "$1" in
         -s) open=false; shift ;;
