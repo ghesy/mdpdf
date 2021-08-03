@@ -6,27 +6,26 @@
 pdf_reader="${MDPDF:-zathura}"
 
 main() {
-    # defualt values
+    # initial values
     inherit=true # inherit document title from first heading
     overwrite=false # overwrite existing files while saving
     stdout=false # print to stdout instead of saving
     printgroff=false # print groff to stdout
-    open=true # open the pdf after saving it in temporary storage
+    open=false
 
-    # use xdg-open if the specified pdf reader doesn't exist
-    command -v "$pdf_reader" >/dev/null || pdf_reader=xdg-open
-
-    while true; do case "$1" in
-        -s) open=false; shift ;;
-        -o) open=false; overwrite=true; shift ;;
-        -p) stdout=true; shift ;;
-        -g) stdout=true; printgroff=true; shift ;;
-        -n) inherit=false; shift ;;
-        -t) title="$2"; shift 2 ;;
-        --) shift; break ;;
-        -*) print_usage_exit; shift ;;
-        *) break ;;
-    esac; done
+    while getopts soOpgnt: opt; do
+        case $opt in
+            s) open=false ;;
+            o) open=false; overwrite=true ;;
+            O) open=true ;;
+            p) stdout=true ;;
+            g) stdout=true; printgroff=true ;;
+            n) inherit=false ;;
+            t) title="$OPTARG" ;;
+            ?) print_usage_exit ;;
+        esac
+    done
+    shift $((OPTIND-1))
 
     [ -z "$*" ] && print_usage_exit
 
@@ -37,9 +36,7 @@ main() {
 
 compile() {
     in="$1"
-    [ ! -r "$in" ] &&
-        echo file "\"$in\"" doesn\'t exist or is unreadable. >&2 &&
-        return 1
+    [ -r "$in" ] || die file "$in" doesn\'t exist or is unreadable.
 
     base="$(basename "$in")"
     out="${base%.*}.pdf"
@@ -56,11 +53,16 @@ compile() {
 }
 
 open() {
-    p="${XDG_RUNTIME_DIR:-/tmp}/mdpdf/" # prefix
-    mkdir -p "$(dirname "$p$out")" || exit 1
+    command -v $pdf_reader >/dev/null || pdf_reader=xdg-open
+    command -v xdg-open >/dev/null || die "no pdf reader was found."
+
+    p="${XDG_RUNTIME_DIR:-$HOME/.cache}/mdpdf/"
+    mkdir -p "$(dirname "$p$out")" || die "couldn't make temporary directory."
+
     md_to_pdf "$in" > "$p$out"
     $pdf_reader "$p$out" >/dev/null 2>&1
-    rm "$p$out"
+
+    [ "$pdf_reader" = zathura ] && rm "$p$out"
 }
 
 save() {
@@ -107,22 +109,26 @@ cat << 'eof'
 Compile markdown to pdf and open/save it.
 Usage: md [OPTION...] [--] FILE...
 Options:
-  -s          save pdf to file instead of opening it.
-  -o          overwrite; don't ask if file already exists.
-                implies -s.
+  -s          save pdf to file instead of opening it (default behaviour).
+  -o          overwrite; don't ask if file already exists. implies -s.
+  -O          save pdf to temporary storage and open it.
   -p          print pdf to stdout; don't save or open.
   -g          print groff to stdout.
-  -n          don't inherit documen's title from
-                the first top-level markdown heading.
+  -n          don't inherit documen's title from the
+                first top-level markdown heading.
   -t <title>  set the title manually.
 
-by default, mdpdf saved the pdf to a temporary file
-and opens it with the pdf reader specified in the
-environment variable MDPDF. if MDPDF is not specified,
-zathura is used. if the pdf reader isn't installed,
-mdpdf goes to save mode instead of open mode.
+If you specify the -O option, mdpdf compiles the pdf to a temporary
+directory, then opens it with a PDF reader. The PDF reader used
+by mdpdf is zathura. If zathura is not installed, it uses xdg-open.
+You can specify your own PDF reader via the "MDPDF" environment variable.
 eof
 exit
+}
+
+die() {
+    printf '%s\n' "mdpdf: $*"
+    exit 1
 }
 
 main "$@"
